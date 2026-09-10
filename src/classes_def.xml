@@ -34,7 +34,7 @@
 	<class name="std::map<int, std::vector<double>>"/>
 	<class name="std::map<int, std::pair<double,double>>"/>
         <class name="std::map<std::vector<RooAbsReal*>, double>" />
-
+	<class name="std::map<std::vector<int>, double>" />
 	<class name="AsymPow" />
 
 	<class name="FastTemplate" />
