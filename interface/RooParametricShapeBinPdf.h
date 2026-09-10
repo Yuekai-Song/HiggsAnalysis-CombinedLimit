@@ -2,6 +2,7 @@
 #ifndef ROOPARAMETRICSHAPEBINPDF
 #define ROOPARAMETRICSHAPEBINPDF
 //---------------------------------------------------------------------------
+#include <memory>
 #include "RooAbsPdf.h"
 #include "RooRealProxy.h"
 #include "RooListProxy.h"
@@ -19,35 +20,42 @@ class RooParametricShapeBinPdf : public RooAbsPdf
 public:
    RooParametricShapeBinPdf() {} ;
    RooParametricShapeBinPdf(const char *name, const char *title,  RooAbsReal& _pdf, 
-		  RooAbsReal& _x, RooArgList& _pars, const TH1 &_shape );
+		  RooAbsReal& _x, const RooArgList& _pars, const TH1 &_shape );
    RooParametricShapeBinPdf(const RooParametricShapeBinPdf& other,
       const char* name = 0);
-   void setTH1Binning(const TH1& _Hnominal);
+   void setTH1Binning(const TH1& _Hnominal, const char* resetRangeName="");
    RooAbsPdf* getPdf() const;
    RooAbsReal* getIntegral(int index) const;
+   // RooAbsReal* getUnderflowIntegral() const;
+   // RooAbsReal* getOverflowIntegral() const;
    TObject* clone(const char* newname) const override { return new RooParametricShapeBinPdf(*this,newname); }
    inline ~RooParametricShapeBinPdf() override { }
 
    Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const override;
    Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const override;
-
+   const std::vector<std::unique_ptr<RooAbsReal>>& checkIntegrals() const;
    //accessors
    RooRealProxy const& getX() const { return x; }
    RooListProxy const& getPars() const { return pars; }
+
    const Double_t* getBins() const { return &xArray[0]; }
    Int_t getNbins() const { return xBins; }
 
-protected:   
+   const std::string& checkExtraName() const { return extraRangeName; }
+
+ protected:   
 
    RooRealProxy x;        // dependent variable
    RooListProxy pars;
    RooRealProxy mypdf;   
-   RooListProxy myintegrals;
+   mutable std::vector<std::unique_ptr<RooAbsReal>> myintegrals;
    Int_t xBins;        // X bins
    Double_t xArray[2000]; // xArray[xBins+1]
    Double_t xMax;        // X max
    Double_t xMin;        // X min
-
+   std::string extraRangeName;
+      // mutable Double_t xMinReal;     // X min of the real variable, in case the range is modified
+      // mutable Double_t xMaxReal;     // X max of the real variable, in case the range is modified
    Double_t evaluate() const override;
 private:
    RooPlot* plotOn(RooPlot* frame, 

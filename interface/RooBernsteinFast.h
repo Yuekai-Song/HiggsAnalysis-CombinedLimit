@@ -33,6 +33,8 @@ public:
     _x("x", "Dependent", this, x),
     _coefList("coefList","List of coefficients",this)
     {
+      _xmin = _x.min();
+      _xmax = _x.max();
       _coefList.add(coefList);
       
       
@@ -57,6 +59,8 @@ public:
   RooBernsteinFast(const RooBernsteinFast& other, const char* name = 0) :
       RooAbsPdf(other, name), 
     _x("x", this, other._x), 
+    _xmin(other._xmin),
+    _xmax(other._xmax),
     _coefList("coefList",this,other._coefList),
     _cmatrix(other._cmatrix),
     _rvector(other._rvector),
@@ -73,9 +77,9 @@ public:
     {
       
       // No analytical calculation available (yet) of integrals over subranges (as for standard RooBernstein)
-      if (rangeName && strlen(rangeName)) {
-        return 0 ;
-      }      
+      // if (rangeName && strlen(rangeName)) {
+      //   return 0 ;
+      // }      
       
       if (matchArgs(allVars, analVars, _x)) return 1;
       return 0;
@@ -92,9 +96,21 @@ public:
       
       _powvector = _cmatrix*_bernvector;
         
-      double xmin = _x.min();
-      double xmax = _x.max();    
-      return (xmax-xmin)*ROOT::Math::Dot(_powvector,_rvector);
+      // double xmin = _x.min();
+      // double xmax = _x.max();    
+      if (_xmin > _x.min() || _xmax < _x.max()) {
+        std::cout << "WARNING: RooBernsteinFast analyticalIntegral(): x range is modified to be larger than the original range." << std::endl;
+      }
+      double xmin = _xmin > _x.min() ? _x.min() : _xmin;
+      double xmax = _xmax < _x.max() ? _x.max() : _xmax;
+      const double xlo = (_x.min(rangeName) - xmin) / (xmax - xmin);
+      const double xhi = (_x.max(rangeName) - xmin) / (xmax - xmin);
+
+      double norm = 0;
+      for (int ipow=0; ipow<=N; ++ipow) {
+        norm += (TMath::Power(xhi,ipow+1) - TMath::Power(xlo,ipow+1)) * _powvector[ipow] * _rvector[ipow];
+      }
+      return (xmax-xmin)*norm;
 
     }
 
@@ -104,6 +120,7 @@ protected:
   typedef ROOT::Math::SVector<double,N+1> VType;
   
   RooRealProxy _x;
+  double _xmin, _xmax;
   RooListProxy _coefList ;
   MType _cmatrix;            //conversion matrix between bernstein and power bases
   VType _rvector;            //vector of integration coefficients
@@ -128,8 +145,13 @@ protected:
         _powvector = _cmatrix*_bernvector;   
       }
       
-      double xmin = _x.min();
-      double xmax = _x.max();
+      // double xmin = _x.min();
+      // double xmax = _x.max();
+      if (_xmin > _x.min() || _xmax < _x.max()) {
+        std::cout << "WARNING: RooBernsteinFast evaluate(): x range is modified to be larger than the original range." << std::endl;
+      }
+      double xmin = _xmin > _x.min() ? _x.min() : _xmin;
+      double xmax = _xmax < _x.max() ? _x.max() : _xmax;
       double x = (_x - xmin) / (xmax - xmin); // rescale to [0,1]
       _xvector[0] = 1.;
       for (int ipow=1; ipow<=N; ++ipow) {
