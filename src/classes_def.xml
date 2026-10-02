@@ -34,7 +34,7 @@
 	<class name="std::map<int, std::vector<double>>"/>
 	<class name="std::map<int, std::pair<double,double>>"/>
         <class name="std::map<std::vector<RooAbsReal*>, double>" />
-
+	<class name="std::map<std::vector<int>, double>" />
 	<class name="AsymPow" />
 
 	<class name="FastTemplate" />
@@ -112,6 +112,13 @@
 	<class name="RooBernsteinFast<5>" />
 	<class name="RooBernsteinFast<6>" />
 	<class name="RooBernsteinFast<7>" />
+	<class name="RooBernsteinFastOld<1>" />
+	<class name="RooBernsteinFastOld<2>" />
+	<class name="RooBernsteinFastOld<3>" />
+	<class name="RooBernsteinFastOld<4>" />
+	<class name="RooBernsteinFastOld<5>" />
+	<class name="RooBernsteinFastOld<6>" />
+	<class name="RooBernsteinFastOld<7>" />
 	<class name="RooBetaFunc_v2" />
 	<class name="RooCB" />
 	<class name="RooCPSHighMassGGH" />
