@@ -24,6 +24,8 @@ public:
    RooParametricShapeBinPdf(const RooParametricShapeBinPdf& other,
       const char* name = 0);
    void setTH1Binning(const TH1& _Hnominal, const char* resetRangeName="");
+   // Drop cached bin integrals without changing binning or named ranges.
+   void clearIntegrals();
    RooAbsPdf* getPdf() const;
    RooAbsReal* getIntegral(int index) const;
    // RooAbsReal* getUnderflowIntegral() const;
@@ -77,4 +79,3 @@ private:
 };
 //---------------------------------------------------------------------------
 #endif
-

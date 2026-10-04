@@ -60,7 +60,8 @@ RooParametricShapeBinPdf::RooParametricShapeBinPdf(const RooParametricShapeBinPd
    myintegrals("myintegrals",this,other.myintegrals),
    xBins(other.xBins),
    xMax(other.xMax),
-   xMin(other.xMin)
+   xMin(other.xMin),
+   extraRangeName(other.extraRangeName)
 {
   //memset(&xArray, 0, sizeof(xArray));
   for (Int_t i=0; i<xBins+1; i++){
@@ -68,8 +69,13 @@ RooParametricShapeBinPdf::RooParametricShapeBinPdf(const RooParametricShapeBinPd
   }
 }
 
-void RooParametricShapeBinPdf::setTH1Binning(const TH1 &_Hnominal, const char* resetRangeName) {
+void RooParametricShapeBinPdf::clearIntegrals() {
   myintegrals.clear();
+  setValueDirty();
+}
+
+void RooParametricShapeBinPdf::setTH1Binning(const TH1 &_Hnominal, const char* resetRangeName) {
+  clearIntegrals();
   // underflowIntegral = nullptr;
   // overflowIntegral = nullptr;
   extraRangeName = std::string(resetRangeName);
@@ -172,9 +178,12 @@ RooAbsReal* RooParametricShapeBinPdf::getIntegral(int index) const {
     obs.add(x.arg());
     for (Int_t iBin = 0; iBin < xBins; iBin++) {
       std::string rangeName = Form("%s_%s_range_bin%d", GetName(), x.GetName(), iBin) + (extraRangeName.empty() ? "" : ("_" + extraRangeName));
-      if (!x.arg().hasRange(rangeName.c_str())) {
-        Double_t xLow = xArray[iBin];
-        Double_t xHigh = xArray[iBin + 1];
+      Double_t xLow = xArray[iBin];
+      Double_t xHigh = xArray[iBin + 1];
+      // Workspace imports can recycle an observable with stale named ranges.
+      if (!x.arg().hasRange(rangeName.c_str()) ||
+          x_rrv.getMin(rangeName.c_str()) != xLow ||
+          x_rrv.getMax(rangeName.c_str()) != xHigh) {
         x_rrv.setRange(rangeName.c_str(), xLow, xHigh);
       }
       myintegral = getPdf()->createIntegral(obs, RooFit::NormSet(obs), Range(rangeName.c_str()));
