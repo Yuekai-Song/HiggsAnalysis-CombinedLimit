@@ -34,6 +34,11 @@ class CMSHistFuncWrapper : public RooAbsReal {
   void printMultiline(std::ostream& os, Int_t contents, Bool_t verbose,
                       TString indent) const override;
 
+  // The histogram integral includes the observable dependencies of func_ and err_.
+  bool forceAnalyticalInt(const RooAbsArg& dep) const override {
+    return &dep == &x_.arg();
+  }
+
   Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars,
                               const char* rangeName = 0) const override;
 
