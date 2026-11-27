@@ -43,7 +43,7 @@ RooParametricShapeBinPdf::RooParametricShapeBinPdf(const char *name, const char 
   mypdf("mypdf","mypdf", this, _pdf),
   // underflowIntegral(nullptr),
   // overflowIntegral(nullptr),
-  myintegrals("myintegrals","myintegrals",this),
+  myintegrals(),
   xBins(0),
   xMax(0),
   xMin(0)
@@ -57,7 +57,7 @@ RooParametricShapeBinPdf::RooParametricShapeBinPdf(const RooParametricShapeBinPd
    x("x", this, other.x),
    pars("pars",this,other.pars),
    mypdf("mypdf",this,other.mypdf),
-   myintegrals("myintegrals",this,other.myintegrals),
+   myintegrals(),  // not copied: the copy builds its own bin integrals on first use
    xBins(other.xBins),
    xMax(other.xMax),
    xMin(other.xMin),
@@ -187,7 +187,7 @@ RooAbsReal* RooParametricShapeBinPdf::getIntegral(int index) const {
         x_rrv.setRange(rangeName.c_str(), xLow, xHigh);
       }
       myintegral = getPdf()->createIntegral(obs, RooFit::NormSet(obs), Range(rangeName.c_str()));
-      myintegrals.add(*myintegral);
+      myintegrals.emplace_back(myintegral);
     }
     // cout << getPdf()->createIntegral(obs)->getVal() << std::endl;
     //last one is full integral (full range)
@@ -199,10 +199,10 @@ RooAbsReal* RooParametricShapeBinPdf::getIntegral(int index) const {
       x_rrv.setRange(rangeName.c_str(), xMin, xMax);
     }
     myintegral = getPdf()->createIntegral(obs, RooFit::NormSet(obs), Range(rangeName.c_str()));
-    myintegrals.add(*myintegral);
+    myintegrals.emplace_back(myintegral);
   }
 
-  return myintegrals.at(index) ? (RooAbsReal*)myintegrals.at(index) : 0;
+  return index >= 0 && index < (int)myintegrals.size() ? myintegrals[index].get() : nullptr;
 }
 
 // RooAbsReal* RooParametricShapeBinPdf::getUnderflowIntegral() const {
@@ -333,7 +333,7 @@ Double_t RooParametricShapeBinPdf::analyticalIntegral(Int_t code, const char* ra
 }
 
 
-const RooListProxy& RooParametricShapeBinPdf::checkIntegrals() const
+const std::vector<std::unique_ptr<RooAbsReal>>& RooParametricShapeBinPdf::checkIntegrals() const
 {
     return myintegrals;
 }

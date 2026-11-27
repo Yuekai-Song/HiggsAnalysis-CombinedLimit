@@ -3,6 +3,7 @@
 #define ROOPARAMETRICSHAPEBINPDF
 //---------------------------------------------------------------------------
 #include <memory>
+#include <vector>
 #include "RooAbsPdf.h"
 #include "RooRealProxy.h"
 #include "RooListProxy.h"
@@ -35,7 +36,7 @@ public:
 
    Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const override;
    Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const override;
-   const RooListProxy& checkIntegrals() const;
+   const std::vector<std::unique_ptr<RooAbsReal>>& checkIntegrals() const;
    //accessors
    RooRealProxy const& getX() const { return x; }
    RooListProxy const& getPars() const { return pars; }
@@ -51,7 +52,10 @@ public:
    RooRealProxy x;        // dependent variable
    RooListProxy pars;
    RooRealProxy mypdf;   
-   mutable RooListProxy myintegrals;
+   // Bin integrals (the last one: full range), built on first use by getIntegral(). Not persisted (//!) and not
+   // copied: a stored integral can hold an integration code of the underlying pdf that is invalid after reading
+   // (RooAddPdf's code registry is not written to file) and refers to the ranges of the session that made it.
+   mutable std::vector<std::unique_ptr<RooAbsReal>> myintegrals; //!
    Int_t xBins;        // X bins
    Double_t xArray[2000]; // xArray[xBins+1]
    Double_t xMax;        // X max
@@ -74,7 +78,7 @@ private:
        return mypdf.arg().plotOn(frame,cmdList) ;
      }
      
-   ClassDefOverride(RooParametricShapeBinPdf,2) // RooParametricShapeBinPdf function
+   ClassDefOverride(RooParametricShapeBinPdf,3) // RooParametricShapeBinPdf function (v3: bin integrals not persisted)
     
 };
 //---------------------------------------------------------------------------
